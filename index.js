@@ -10,7 +10,7 @@ app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 app.use(bodyParser.urlencoded({ extended: true })); 
 
-//
+//main page funtions
 
 app.get('/', function (req, res) {
   Users.count(function (err, users) {
@@ -22,14 +22,20 @@ app.get('/', function (req, res) {
   });
 });
 
+//main page funtions
+
 app.post('/user/register', function (req, res) {
+   if(req.body.password !== req.body.password_confirmation){
+      return res.render('index', {errors: "Password and password confirmation do not match"});
+  }
+  
   var newUser = new Users();
   newUser.hashed_password = req.body.password;
   newUser.email = req.body.email;
   newUser.name = req.body.fl_name;
   newUser.save(function(err){
     if(err){
-      res.send('there was an error saving the user');
+      res.render('index', {errors: err});
     }else{
       res.redirect('/');
     }
