@@ -18,6 +18,8 @@ var store = new MongoDBStore({
 app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 app.use(bodyParser.urlencoded({ extended: true })); 
+// Configure session middleware that will parse the cookies
+// of an incoming request to see if there is a session for this cookie.
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
@@ -26,7 +28,7 @@ app.use(session({
   store: store
 }));
 
-// session handling 
+// Middleware that looks up the current user for this sesssion, if there is one
 app.use(function(req, res, next){
   console.log('req.session =', req.session);
   if(req.session.userId){
@@ -41,9 +43,9 @@ app.use(function(req, res, next){
     next();
   }
 });
-//middleware
 
-//check whether logged in
+// Middleware that checks if a user is logged in. If so, the
+// request continues to be processed, otherwise a 403 is returned.
 function isLoggedIn(req, res, next){
   console.log('res.locals.currentUser = ', res.locals.currentUser);
   if(res.locals.currentUser){
@@ -68,7 +70,7 @@ function loadUserTasks(req, res, next) {
   });
 }
 
-//main page funtions
+// Return the home page after loading tasks for users, or not.
 app.get('/', loadUserTasks, function (req, res) {
       res.render('index');
 });
@@ -79,29 +81,35 @@ app.post('/user/register', function (req, res) {
    if(req.body.password !== req.body.password_confirmation){
       return res.render('index', {errors: "Password and password confirmation do not match"});
   }
+  
+// Save the new user
   var newUser = new Users();
   newUser.hashed_password = req.body.password;
   newUser.email = req.body.email;
   newUser.name = req.body.fl_name;
   newUser.save(function(err, user){
-// give session the database ID
-    if(err){
-      err = 'Error registering you!';
-      res.render('index', {errors: err});
-    }else{
+// give session the database ID 
+// If there are no errors, redirect to home page
+    if(user && !err){
       req.session.userId = user._id;
       res.redirect('/');
     }
+    var errors = "Error registering you.";
+    if(err){
+      if(err.errmsg && err.errmsg.match(/duplicate/)){
+        errors = 'Account with this email already exists!';
+      }
+      return res.render('index', {errors: errors});
+    }
   });
-  console.log('The user has the email address', req.body.email);
 });
 
 
 //login function 
 app.post('/user/login', function (req, res) {
-  var user = Users.findOne({email: req.body.email}, function(err, user){
+  Users.findOne({email: req.body.email}, function(err, user){
     if(err || !user){
-      res.send('bad login, no such user');
+      res.send('Invalid email address');
       return;
     }
     console.log('user =', user);
@@ -110,7 +118,7 @@ app.post('/user/login', function (req, res) {
 //compare password with database
     user.comparePassword(req.body.password, function(err, isMatch){
       if(err || !isMatch){
-        res.send('bad password duder');
+        res.send('Invalid password');
       }else{
 // give session the database ID
         req.session.userId = user._id;
@@ -131,8 +139,8 @@ app.get('/user/logout', function(req, res){
 //  the user to be logged in.
 app.use(isLoggedIn);
 
-// tasks create handler - add new tasks to database, check error, and return
-app.post('/tasks/create', function(req, res){
+// tasks create handler - add new tasks to database, check error, and return to home page
+app.post('/task/create', function(req, res){
   var newTask = new Tasks();
   newTask.owner = res.locals.currentUser._id;
   newTask.title = req.body.title;
@@ -148,6 +156,7 @@ app.post('/tasks/create', function(req, res){
 });
 
 //receive message from server
+// Start the server ? why in the last step?
 app.listen(process.env.PORT, function () {
   console.log('Example app listening on port ' + process.env.PORT);
 });
