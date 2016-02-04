@@ -49,12 +49,12 @@ app.get('/', function (req, res) {
     }else{
       res.render('index', {
         userCount: users.length,
-        currentUser: res.locals.currentUser
+          currentUser: res.locals.currentUser
       });
     }
   });
 });
-
+        
 //register function & validation check  & storage registration into database
 
 app.post('/user/register', function (req, res) {
@@ -67,10 +67,11 @@ app.post('/user/register', function (req, res) {
   newUser.name = req.body.fl_name;
   newUser.save(function(err, user){
 // give session the database ID
-    req.session.userId = user._id;
     if(err){
+      err = ''
       res.render('index', {errors: err});
     }else{
+      req.session.userId = user._id;
       res.redirect('/');
     }
   });
@@ -88,7 +89,7 @@ app.post('/user/login', function (req, res) {
     console.log('user =', user);
     console.log('actual password =', user.hashed_password);
     console.log('provided password =', req.body.password);
-    
+//compare password with database
     user.comparePassword(req.body.password, function(err, isMatch){
       if(err || !isMatch){
         res.send('bad password duder');
