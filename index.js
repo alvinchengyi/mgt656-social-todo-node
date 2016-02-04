@@ -27,7 +27,6 @@ app.use(session({
 }));
 
 // session handling 
-
 app.use(function(req, res, next){
   console.log('req.session =', req.session);
   if(req.session.userId){
@@ -42,22 +41,38 @@ app.use(function(req, res, next){
     next();
   }
 });
+//middleware
+
+//check whether logged in
+function isLoggedIn(req, res, next){
+  console.log('res.locals.currentUser = ', res.locals.currentUser);
+  if(res.locals.currentUser){
+    next();
+  }else{
+    res.sendStatus(403);
+  }
+}
+// middleware - if user exist, find tasks from data base 
+function loadUserTasks(req, res, next) {
+  if(!res.locals.currentUser){
+    return next();
+  }
+  Tasks.find({}).or([
+      {owner: res.locals.currentUser},
+      {collaborators: res.locals.currentUser.email}])
+    .exec(function(err, tasks){
+      if(!err){
+        res.locals.tasks = tasks;
+      }
+      next();
+  });
+}
 
 //main page funtions
-
-app.get('/', function (req, res) {
-  Users.count(function (err, users) {
-    if (err) {
-      res.send('error getting users');
-    }else{
-      res.render('index', {
-        userCount: users.length,
-        currentUser: res.locals.currentUser
-      });
-    }
-  });
+app.get('/', loadUserTasks, function (req, res) {
+      res.render('index');
 });
-        
+
 //register function & validation check  & storage registration into database
 
 app.post('/user/register', function (req, res) {
@@ -110,6 +125,26 @@ app.post('/user/login', function (req, res) {
 app.get('/user/logout', function(req, res){
   req.session.destroy();
   res.redirect('/');
+});
+
+//  All the controllers and routes below this require
+//  the user to be logged in.
+app.use(isLoggedIn);
+
+// tasks create handler - add new tasks to database, check error, and return
+app.post('/tasks/create', function(req, res){
+  var newTask = new Tasks();
+  newTask.owner = res.locals.currentUser._id;
+  newTask.title = req.body.title;
+  newTask.description = req.body.description;
+  newTask.collaborators = [req.body.collaborator1, req.body.collaborator2, req.body.collaborator3];
+  newTask.save(function(err, savedTask){
+    if(err || !savedTask){
+      res.send('Error saving task!');
+    }else{
+      res.redirect('/');
+    }
+  });
 });
 
 //receive message from server
