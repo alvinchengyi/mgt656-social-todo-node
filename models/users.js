@@ -26,6 +26,7 @@ var UserSchema = new Schema({
     hashed_password: stringField
 });
 
+//hash password
 UserSchema.pre('save', function(next) {
     var user = this;
 
@@ -56,6 +57,6 @@ UserSchema.methods.comparePassword = function(candidatePassword, cb) {
 
 UserSchema.statics.count = function (cb) {
   return this.model('Users').find({}, cb);
-}
+};
 
 module.exports = mongoose.model('Users', UserSchema);

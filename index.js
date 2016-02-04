@@ -49,7 +49,7 @@ app.get('/', function (req, res) {
     }else{
       res.render('index', {
         userCount: users.length,
-          currentUser: res.locals.currentUser
+        currentUser: res.locals.currentUser
       });
     }
   });
@@ -68,7 +68,7 @@ app.post('/user/register', function (req, res) {
   newUser.save(function(err, user){
 // give session the database ID
     if(err){
-      err = ''
+      err = 'Error registering you!';
       res.render('index', {errors: err});
     }else{
       req.session.userId = user._id;
