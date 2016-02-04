@@ -2,16 +2,19 @@ var express = require('express');
 var exphbs = require('express-handlebars');
 var app = express();
 var bodyParser = require('body-parser');
-var Users = require('./models/users.js');
 var session = require('express-session');
 var MongoDBStore = require('connect-mongodb-session')(session);
+var mongoose = require('mongoose');
+mongoose.connect(process.env.MONGO_URL);
+var Users = require('./models/users.js');
+var Tasks = require('./models/tasks.js');
 var store = new MongoDBStore({ 
   uri: process.env.MONGO_URL,
   collection: 'sessions'
 });
 
-
 // configure our app
+
 app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 app.use(bodyParser.urlencoded({ extended: true })); 
