@@ -4,9 +4,14 @@ var app = express();
 var bodyParser = require('body-parser');
 var Users = require('./models/users.js');
 var session = require('express-session');
+var MongoDBStore = require('connect-mongodb-session')(session);
+var store = new MongoDBStore({ 
+  uri: process.env.MONGO_URL,
+  collection: 'sessions'
+});
+
 
 // configure our app
-
 app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 app.use(bodyParser.urlencoded({ extended: true })); 
@@ -14,19 +19,22 @@ app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: 'auto' }
-}))
-// session handling
+  cookie: { secure: 'auto' },
+  store: store
+}));
+
+// session handling 
 
 app.use(function(req, res, next){
   console.log('req.session =', req.session);
   if(req.session.userId){
     Users.findById(req.session.userId, function(err, user){
       if(!err){
+//give local user database data, when session is found
         res.locals.currentUser = user;
       }
       next();
-    })
+    });
   }else{
     next();
   }
@@ -47,7 +55,7 @@ app.get('/', function (req, res) {
   });
 });
 
-//register validation check and feedback
+//register function & validation check  & storage registration into database
 
 app.post('/user/register', function (req, res) {
    if(req.body.password !== req.body.password_confirmation){
@@ -58,6 +66,7 @@ app.post('/user/register', function (req, res) {
   newUser.email = req.body.email;
   newUser.name = req.body.fl_name;
   newUser.save(function(err, user){
+// give session the database ID
     req.session.userId = user._id;
     if(err){
       res.render('index', {errors: err});
@@ -66,6 +75,30 @@ app.post('/user/register', function (req, res) {
     }
   });
   console.log('The user has the email address', req.body.email);
+});
+
+
+//login function 
+app.post('/user/login', function (req, res) {
+  var user = Users.findOne({email: req.body.email}, function(err, user){
+    if(err || !user){
+      res.send('bad login, no such user');
+      return;
+    }
+    console.log('user =', user);
+    console.log('actual password =', user.hashed_password);
+    console.log('provided password =', req.body.password);
+    
+    user.comparePassword(req.body.password, function(err, isMatch){
+      if(err || !isMatch){
+        res.send('bad password duder');
+      }else{
+// give session the database ID
+        req.session.userId = user._id;
+        res.redirect('/');
+      }
+    });
+  });
 });
 
 //logout & destroy session infomation & return to main page

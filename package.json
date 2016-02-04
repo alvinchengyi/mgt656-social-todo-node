@@ -18,6 +18,7 @@
   "homepage": "https://github.com/alvinchengyi/mgt656-social-todo-node#readme",
   "dependencies": {
     "body-parser": "^1.14.2",
+    "connect-mongodb-session": "^1.1.0",
     "express": "^4.13.4",
     "express-handlebars": "^3.0.0",
     "express-session": "^1.13.0",
