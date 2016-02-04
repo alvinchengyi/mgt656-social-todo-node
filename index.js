@@ -30,7 +30,7 @@ app.use(function(req, res, next){
   }else{
     next();
   }
-})
+});
 
 //main page funtions
 
@@ -66,6 +66,13 @@ app.post('/user/register', function (req, res) {
     }
   });
   console.log('The user has the email address', req.body.email);
+});
+
+//logout & destroy session infomation & return to main page
+
+app.get('/user/logout', function(req, res){
+  req.session.destroy();
+  res.redirect('/');
 });
 
 //receive message from server
