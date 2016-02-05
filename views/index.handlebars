@@ -47,11 +47,11 @@
         
 {{else}}
 <div>
-    <form class="login-form" action="/user/login" method="POST">
+    <form class="login" action="/user/login" method="POST">
         <label for="email">Email</label>
-        <input name="email" type="text"><br>
+        <input name="email" id = "email" type="text"><br>
         <label for="password">Password</label>
-        <input name="password" type="text"><br>
+        <input name="password" id = "password" type="text"><br>
         <input type="submit"  class="log-in-submit">
     </form>
 </div>
@@ -59,7 +59,7 @@
 <div><hr></div>
 
 <div>
-    <form action="/user/register" method="post" class="signup-form" style="display: block;">
+    <form class="register" action="/user/register" method="POST" style="display: block;">
       <input name="fl_name" type="text" class="text-input" placeholder="first &amp; last name">
       <input name="email" type="email" class="text-input" placeholder="email">
       <input name="password" type="password" class="text-input" placeholder="password">
